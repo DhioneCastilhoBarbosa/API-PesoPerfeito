@@ -1,5 +1,6 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+const { UpdateCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 const { v4: uuidv4 } = require('uuid');
 
 // Configuração do cliente DynamoDB v3
@@ -56,5 +57,59 @@ exports.getTickets = async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar tickets.', error);
     res.status(500).json({ error: 'Erro ao buscar tickets.' });
+  }
+};
+
+// Função para deletar um ticket
+exports.deleteTicket = async (req, res) => {
+  const { ticketId } = req.params;
+
+  const params = {
+    TableName: 'Tickets',
+    Key: { ticketId },
+  };
+
+  try {
+    await dynamoDb.send(new DeleteCommand(params));
+    res.json({ message: 'Ticket deletado com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao deletar ticket:', error);
+    res.status(500).json({ error: 'Erro ao deletar ticket.' });
+  }
+};
+
+// Função para atualizar um ticket
+
+// Função para atualizar um ticket
+exports.updateTicket = async (req, res) => {
+  const { ticketId } = req.params;
+  const { cliente, produto, operador, placa, local, pesoBruto, pesoLiquido, tara } = req.body;
+
+  const params = {
+    TableName: 'Tickets',
+    Key: { ticketId },
+    UpdateExpression: 'set cliente = :cliente, produto = :produto, operador = :operador, placa = :placa, #localAttr = :local, pesoBruto = :pesoBruto, pesoLiquido = :pesoLiquido, tara = :tara',
+    ExpressionAttributeNames: {
+      '#localAttr': 'local', // Usando um alias para "local"
+    },
+    ExpressionAttributeValues: {
+      ':cliente': cliente,
+      ':produto': produto,
+      ':operador': operador,
+      ':placa': placa,
+      ':local': local,
+      ':pesoBruto': pesoBruto,
+      ':pesoLiquido': pesoLiquido,
+      ':tara': tara,
+    },
+    ReturnValues: 'UPDATED_NEW',
+  };
+
+  try {
+    const data = await dynamoDb.send(new UpdateCommand(params));
+    res.json({ message: 'Ticket atualizado com sucesso!', updatedAttributes: data.Attributes });
+  } catch (error) {
+    console.error('Erro ao atualizar ticket:', error);
+    res.status(500).json({ error: 'Erro ao atualizar ticket.' });
   }
 };

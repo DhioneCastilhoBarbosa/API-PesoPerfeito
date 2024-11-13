@@ -10,13 +10,13 @@ const dynamoDb = DynamoDBDocumentClient.from(client);
 
 // Função de registro de usuário
 exports.register = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, username, password} = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
   const userId = uuidv4();
-
+  const enabled = false;
   const params = {
     TableName: 'Users',
-    Item: { userId, username, password: hashedPassword },
+    Item: { userId, email,username, password: hashedPassword, enabled},
   };
 
   try {
@@ -30,18 +30,24 @@ exports.register = async (req, res) => {
 
 // Função de login do usuário
 exports.login = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
   const params = {
     TableName: 'Users',
-    Key: { username },
+    Key: { email },
   };
 
   try {
     const { Item: user } = await dynamoDb.send(new GetCommand(params));
+    
+    // Verificar se o usuário existe, a senha está correta e se está habilitado
     if (user && await bcrypt.compare(password, user.password)) {
-      const token = jwt.sign({ userId: user.userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      res.json({ token });
+      if (user.enabled) { // Apenas permita o login se 'enabled' for true
+        const token = jwt.sign({ userId: user.userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.json({ token, username: user.username });
+      } else {
+        res.status(403).json({ error: 'Usuário desativado. Entre em contato com o administrador.' });
+      }
     } else {
       res.status(400).json({ error: 'Credenciais inválidas.' });
     }
