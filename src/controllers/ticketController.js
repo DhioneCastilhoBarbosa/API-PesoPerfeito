@@ -40,18 +40,21 @@ exports.createTicket = async (req, res) => {
 // Função para listar tickets com paginação
 exports.getTickets = async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
+  
+  // Verifica se `startKey` existe e é um JSON válido, caso contrário define como `null`
   const startKey = req.query.startKey ? JSON.parse(req.query.startKey) : null;
-
+  
   const params = {
     TableName: 'Tickets',
     Limit: limit,
-    ExclusiveStartKey: startKey,
+    ...(startKey && { ExclusiveStartKey: startKey }), // Adiciona `ExclusiveStartKey` somente se `startKey` existir
   };
 
   try {
     const data = await dynamoDb.send(new ScanCommand(params));
     res.json({ items: data.Items, lastEvaluatedKey: data.LastEvaluatedKey });
   } catch (error) {
+    console.error('Erro ao buscar tickets.', error);
     res.status(500).json({ error: 'Erro ao buscar tickets.' });
   }
 };
