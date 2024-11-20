@@ -45,7 +45,7 @@ exports.getTicketsByClientName = async (req, res) => {
   if (clientName) {
     filterExpression.push('contains(#cliente, :cliente)'); // Usar '=' para correspondência exata
     expressionAttributeNames['#cliente'] = 'cliente';
-    expressionAttributeValues[':cliente'] = clientName.toLowerCase(); // Garantir comparação sem diferenciar maiúsculas/minúsculas
+    expressionAttributeValues[':cliente'] = clientName; // Garantir comparação sem diferenciar maiúsculas/minúsculas
   }
 
   // Filtro para ticketID
