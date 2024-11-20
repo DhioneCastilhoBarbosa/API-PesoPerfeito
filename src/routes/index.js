@@ -14,5 +14,6 @@ router.post('/tickets', authenticate, ticketController.createTicket);
 router.get('/tickets', authenticate, ticketController.getTickets);
 router.put('/tickets/:ticketId', authenticate, ticketController.updateTicket);
 router.delete('/tickets/:ticketId', authenticate, ticketController.deleteTicket);
+router.get('/tickets-by-client-name', authenticate, ticketController.getTicketsByClientName);
 
 module.exports = router;

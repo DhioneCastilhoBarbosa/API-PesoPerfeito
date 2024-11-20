@@ -31,7 +31,7 @@ exports.register = async (req, res) => {
 // Função de login do usuário
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-
+  //console.log(email, password);
   const params = {
     TableName: 'Users',
     Key: { email },
