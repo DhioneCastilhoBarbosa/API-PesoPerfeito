@@ -7,9 +7,9 @@ const { v4: uuidv4 } = require('uuid');
 const client = new DynamoDBClient({ region: process.env.AWS_REGION });
 const dynamoDb = DynamoDBDocumentClient.from(client);
 
-exports.getTicketsByClientName = async (req, res) => {
+exports.getTicketsByFilters = async (req, res) => {
   const clientName = req.query.clientName;
-  const ticketID = req.query.ticketID; // Parâmetro ticketID opcional
+  const placa = req.query.placa; // Parâmetro placa
   const startDate = req.query.startDate; // Data inicial
   let endDate = req.query.endDate; // Data final
 
@@ -17,8 +17,8 @@ exports.getTicketsByClientName = async (req, res) => {
   const isValidDate = (date) => !isNaN(Date.parse(date));
 
   // Validações
-  if (!clientName && !ticketID) {
-    return res.status(400).json({ error: 'Pelo menos um dos parâmetros clientName ou ticketID é obrigatório.' });
+  if (clientName && placa) {
+    return res.status(400).json({ error: 'Pelo menos um dos parâmetros clientName ou placa é obrigatório.' });
   }
 
   if (startDate && !isValidDate(startDate)) {
@@ -48,11 +48,11 @@ exports.getTicketsByClientName = async (req, res) => {
     expressionAttributeValues[':cliente'] = clientName; // Garantir comparação sem diferenciar maiúsculas/minúsculas
   }
 
-  // Filtro para ticketID
-  if (ticketID) {
-    filterExpression.push('#ticketID = :ticketID');
-    expressionAttributeNames['#ticketID'] = 'ticketID';
-    expressionAttributeValues[':ticketID'] = ticketID;
+  // Filtro para placa
+  if (placa) {
+    filterExpression.push('#placa = :placa');
+    expressionAttributeNames['#placa'] = 'placa';
+    expressionAttributeValues[':placa'] = placa;
   }
 
   // Adiciona filtros para datas, se fornecidos
@@ -83,7 +83,6 @@ exports.getTicketsByClientName = async (req, res) => {
   // Juntando todas as partes do filtro
   const finalFilterExpression = filterExpression.join(' AND ');
 
-  
   const scanParams = {
     TableName: 'Tickets',
     FilterExpression: finalFilterExpression,
@@ -114,11 +113,12 @@ exports.getTicketsByClientName = async (req, res) => {
 
 
 
+
 // Função para criar um novo ticket
 exports.createTicket = async (req, res) => {
-  const ticketId = uuidv4();
+  //const ticketId = uuidv4();
   const dataHora = new Date().toISOString();
-  const { cliente, produto, operador, placa, local, pesoBruto, pesoLiquido, tara } = req.body;
+  const { ticketId,cliente,MTR ,produto, operador, placa, local, pesoBruto, pesoLiquido, tara } = req.body;
 
   const ticketParams = {
     TableName: 'Tickets',
@@ -126,7 +126,7 @@ exports.createTicket = async (req, res) => {
       ticketId,
       dataHora,
       cliente,
-      MTR: Math.floor(Math.random() * 100000),
+      MTR,
       produto,
       operador,
       placa,
