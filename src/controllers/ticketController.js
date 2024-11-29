@@ -104,6 +104,12 @@ exports.getTicketsByFilters = async (req, res) => {
       lastEvaluatedKey = data.LastEvaluatedKey;
     } while (lastEvaluatedKey);
 
+    allItems.sort((a, b) => {
+      const dateA = new Date(a.dataHora).getTime(); // Converta `dataHora` para timestamp
+      const dateB = new Date(b.dataHora).getTime();
+      return dateA - dateB; // Ordem crescente (troque para `dateB - dateA` para ordem decrescente)
+    });
+
     res.json({ items: allItems });
   } catch (error) {
     console.error('Erro ao buscar tickets:', error);
@@ -166,61 +172,6 @@ exports.createTicket = async (req, res) => {
 
 
 // Função para listar tickets com paginação
-
-/*exports.getTickets = async (req, res) => {
-  const limit = parseInt(req.query.limit) || 10;
-
-  // Decodificar e validar o `lastEvaluatedKey` da query string
-  let lastEvaluatedKey = null;
-  if (req.query.lastEvaluatedKey) {
-    try {
-      lastEvaluatedKey = JSON.parse(decodeURIComponent(req.query.lastEvaluatedKey));
-    } catch (error) {
-      return res.status(400).json({ error: 'lastEvaluatedKey inválido. Deve ser um JSON válido.' });
-    }
-  }
-
-  const queryParams = {
-    TableName: 'Tickets',
-    IndexName: 'allTickets-dataHora-index', // Nome do GSI
-    KeyConditionExpression: 'allTickets = :allTickets', // Filtro pela chave de partição
-    ExpressionAttributeValues: {
-      ':allTickets': 'allTickets', // Valor fixo para consultar todos os tickets
-    },
-    ScanIndexForward: false, // Ordenar do mais recente para o mais antigo
-    Limit: limit, // Número de itens a retornar
-    ...(lastEvaluatedKey && { ExclusiveStartKey: lastEvaluatedKey }), // Paginação
-  };
-
-  const countParams = {
-    TableName: 'Tickets',
-    IndexName: 'allTickets-dataHora-index', // Nome do GSI
-    Select: 'COUNT', // Apenas conta os itens
-    KeyConditionExpression: 'allTickets = :allTickets',
-    ExpressionAttributeValues: {
-      ':allTickets': 'allTickets',
-    },
-  };
-
-  try {
-    // Consulta principal para obter itens e lastEvaluatedKey
-    const data = await dynamoDb.send(new QueryCommand(queryParams));
-
-    // Consulta adicional para obter o total de itens no índice
-    const totalData = await dynamoDb.send(new QueryCommand(countParams));
-
-    res.json({
-      items: data.Items, // Lista de itens retornados
-      lastEvaluatedKey: data.LastEvaluatedKey
-        ? encodeURIComponent(JSON.stringify(data.LastEvaluatedKey))
-        : null, // Codificar o lastEvaluatedKey para evitar problemas de formatação
-      totalItems: totalData.Count, // Total de itens no índice
-    });
-  } catch (error) {
-    console.error('Erro ao buscar tickets:', error);
-    res.status(500).json({ error: 'Erro ao buscar tickets.' });
-  }
-};*/
 
 exports.getTickets = async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
